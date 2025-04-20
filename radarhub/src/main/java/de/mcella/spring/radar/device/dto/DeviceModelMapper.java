@@ -6,6 +6,9 @@ public class DeviceModelMapper {
 
   public Device map(DeviceEntity deviceEntity) {
     return new Device(
-        deviceEntity.getId(), deviceEntity.getLatitude(), deviceEntity.getLongitude());
+        deviceEntity.getId(),
+        deviceEntity.getLatitude(),
+        deviceEntity.getLongitude(),
+        deviceEntity.getRadius());
   }
 }
