@@ -141,7 +141,7 @@ async fn main() {
 
     let device_id = &args.id;
 
-    thread::sleep(time::Duration::from_millis(30000));
+    thread::sleep(time::Duration::from_millis(20000));
 
     let registered = register_device(device_id, args.latitude, args.longitude).await;
     match registered {
@@ -157,7 +157,7 @@ async fn main() {
     let mut reader = csv::Reader::from_reader(file);
 
     for result in reader.records() {
-        thread::sleep(time::Duration::from_millis(3500));
+        thread::sleep(time::Duration::from_millis(2500));
         match result {
             Ok(record) => {
                 let obj_id = match record[0].parse::<u64>() {
