@@ -1,2 +1,21 @@
-# radar
-Application for displaying the geo location of objects from registered devices
+# Radar Application
+
+## Table of contents
+
+* [Introduction](#introduction)
+* [Requirements](#requirements)
+* [Run application](#run-application)
+
+## Introduction
+
+The Radar application allows registered devices to communicate with a Radar Hub. The Hub receives the geographical position of nearby objects from the devices. A frontend web application displays the position of the detected objects in a 2d canvas. The frontend application continuosly receives data from a reactive backend.
+
+## Requirements
+
+- Docker (Docker compose)
+
+## Run Applications
+
+```sh
+docker-compose -f docker-compose.yml up
+```

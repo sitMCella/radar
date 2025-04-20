@@ -1,0 +1,80 @@
+services:
+  db:
+    image: postgres:17.4
+    container_name: "radarhubdb"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: mysecretpassword
+      POSTGRES_DB: radarhub
+    ports:
+      - "5432:5432"
+
+  hub:
+    image: "radar/radarhub"
+    build:
+      dockerfile: "radarhub/Dockerfile"
+    container_name: "radarhub"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/radarhub
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: mysecretpassword
+      SPRING_DATASOURCE_PLATFORM: postgresql
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+
+  reactivebackend:
+    image: "radar/radarreactive"
+    build:
+      dockerfile: "radarreactive/Dockerfile"
+    container_name: "radarreactive"
+    environment:
+      SPRING_R2DBC_URL: r2dbc:postgresql://db:5432/radarhub
+      SPRING_R2DBC_USERNAME: postgres
+      SPRING_R2DBC_PASSWORD: mysecretpassword
+    ports:
+      - "9090:8080"
+    depends_on:
+      - db
+      - hub
+
+  frontend:
+    image: "radar/radarfrontend"
+    build:
+      dockerfile: "radarfrontend/Dockerfile"
+    container_name: "radarfrontend"
+    ports:
+      - "80:80"
+    depends_on:
+      - reactivebackend
+
+  dev1:
+    image: "radar/radardevice_dev1"
+    build:
+      dockerfile: "radardevice/Dockerfile_dev1"
+    container_name: "radardevice_dev1"
+    depends_on:
+      - hub
+      - reactivebackend
+      - frontend
+
+  dev2:
+    image: "radar/radardevice_dev2"
+    build:
+      dockerfile: "radardevice/Dockerfile_dev2"
+    container_name: "radardevice_dev2"
+    depends_on:
+      - hub
+      - reactivebackend
+      - frontend
+
+  dev3:
+    image: "radar/radardevice_dev3"
+    build:
+      dockerfile: "radardevice/Dockerfile_dev3"
+    container_name: "radardevice_dev3"
+    depends_on:
+      - hub
+      - reactivebackend
+      - frontend
