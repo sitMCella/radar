@@ -1,6 +1,6 @@
 # Radar Application
 
-<img src="https://github.com/sitMCella/radar/wiki/images/radar.png" width="100">
+<img src="https://github.com/sitMCella/radar/wiki/images/radar.png" width="500">
 
 ## Table of contents
 
