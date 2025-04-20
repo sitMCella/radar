@@ -19,3 +19,5 @@ The Radar application allows registered devices to communicate with a Radar Hub.
 ```sh
 docker-compose -f docker-compose.yml up
 ```
+
+Open http://localhost:80 to view the application in your browser.

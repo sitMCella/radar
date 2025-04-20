@@ -29,3 +29,9 @@ It correctly bundles React in production mode and optimizes the build for the be
 ```sh
 npm run build
 ```
+
+### Format Code
+
+```sh
+npm run prettier:write
+```
