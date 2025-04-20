@@ -5,7 +5,6 @@ import { Grid } from '@react-three/drei'
 function Radar() {
     const [devices, setDevices] = useState([])
     const [signals, setSignals] = useState([])
-    const [pulseRadius, setPulseRadius] = useState([])
 
     function Device(device) {
         const ref = useRef()
@@ -28,7 +27,7 @@ function Radar() {
 
         useFrame(({ clock }) => {
             const t = clock.getElapsedTime()
-            const scale = 1 + Math.sin(t * 2) * 60
+            const scale = 1 + Math.sin(t * 2) * device.device.radius
             ref.current.scale.set(scale, scale, scale)
             ref.current.position.x = device.device.longitude
             ref.current.position.y = device.device.latitude
@@ -76,7 +75,6 @@ function Radar() {
                 const device = JSON.parse(event.data)
                 if (!devices.some((item) => device.id === item.id)) {
                     setDevices((prevDevices) => [...prevDevices, device])
-                    setPulseRadius((prevPulseRadius) => [...prevPulseRadius, 0])
                 }
             }
         }
@@ -135,7 +133,7 @@ function Radar() {
             signalsEventSource.close()
             clearInterval(interval)
         }
-    }, [devices, signals, pulseRadius])
+    }, [devices, signals])
 
     return (
         <div>

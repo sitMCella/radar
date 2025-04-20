@@ -12,6 +12,7 @@ public class DeviceEntity {
   @Id private String id;
   private Double latitude;
   private Double longitude;
+  private Double radius;
 
   DeviceEntity() {}
 
@@ -19,6 +20,7 @@ public class DeviceEntity {
     this.id = device.id();
     this.latitude = device.latitude();
     this.longitude = device.longitude();
+    this.radius = device.radius();
   }
 
   public String getId() {
@@ -31,5 +33,9 @@ public class DeviceEntity {
 
   public Double getLongitude() {
     return this.longitude;
+  }
+
+  public Double getRadius() {
+    return this.radius;
   }
 }

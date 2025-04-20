@@ -5,8 +5,7 @@ RUN cargo build --release
 
 FROM debian:bookworm-slim
 RUN apt-get update && apt-get install -y ca-certificates && apt-get install -y openssl ca-certificates && rm -rf /var/lib/apt/lists/*
-RUN openssl version
 WORKDIR /app
 COPY --from=builder /app/target/release/radardevice .
 COPY ./radardevice/dev1_signals.csv .
-ENTRYPOINT ["./radardevice", "--id", "9b02c045-abc5-4ae9-b179-8b5d051326b4", "--latitude", "50.34", "--longitude", "80.30", "--file-name", "/app/dev1_signals.csv"]
+ENTRYPOINT ["./radardevice", "--id", "9b02c045-abc5-4ae9-b179-8b5d051326b4", "--latitude", "50.34", "--longitude", "80.30", "--radius", "50", "--file-name", "/app/dev1_signals.csv"]

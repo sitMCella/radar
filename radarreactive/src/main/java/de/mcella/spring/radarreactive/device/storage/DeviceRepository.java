@@ -22,7 +22,8 @@ public class DeviceRepository {
                 new Device(
                     row.get("id", String.class),
                     row.get("latitude", Double.class),
-                    row.get("longitude", Double.class)))
+                    row.get("longitude", Double.class),
+                    row.get("radius", Double.class)))
         .all();
   }
 }

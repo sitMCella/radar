@@ -17,6 +17,9 @@ struct Args {
     longitude: f64,
 
     #[arg(long)]
+    radius: f64,
+
+    #[arg(long)]
     file_name: String,
 }
 
@@ -62,12 +65,14 @@ async fn register_device(
     id: &String,
     latitude: f64,
     longitude: f64,
+    radius: f64,
 ) -> Result<String, Box<dyn Error>> {
     let client = reqwest::Client::new();
     let body = json!({
         "id": id,
         "latitude": latitude,
-        "longitude": longitude
+        "longitude": longitude,
+        "radius": radius
     });
     // Development environment: use the URL "http://localhost:8080/api/devices"
     let response = client
@@ -112,9 +117,7 @@ async fn send_signal(
         .await?;
     println!("{:#?}", response);
     match response.status() {
-        reqwest::StatusCode::ACCEPTED => {
-            Ok(())
-        }
+        reqwest::StatusCode::ACCEPTED => Ok(()),
         _ => Err(Box::new(DeviceError::Signal(
             response.status().as_str().to_owned(),
         ))),
@@ -126,8 +129,8 @@ async fn main() {
     let args = Args::parse();
 
     println!(
-        "Device id: {} - latitude: {} - longitude: {}",
-        args.id, args.latitude, args.longitude
+        "Device id: {} - latitude: {} - longitude: {} - radius: {}",
+        args.id, args.latitude, args.longitude, args.radius
     );
 
     let file = match File::open(args.file_name) {
@@ -142,7 +145,7 @@ async fn main() {
 
     thread::sleep(time::Duration::from_millis(20000));
 
-    let registered = register_device(device_id, args.latitude, args.longitude).await;
+    let registered = register_device(device_id, args.latitude, args.longitude, args.radius).await;
     match registered {
         Ok(id) => println!("Registered device: {}", id),
         Err(e) => {
