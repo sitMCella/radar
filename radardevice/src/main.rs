@@ -96,7 +96,7 @@ async fn send_signal(
     obj_id: u64,
     latitude: f64,
     longitude: f64,
-) -> Result<u64, Box<dyn Error>> {
+) -> Result<(), Box<dyn Error>> {
     let client = reqwest::Client::new();
     let body = json!({
         "deviceId": device_id,
@@ -112,9 +112,8 @@ async fn send_signal(
         .await?;
     println!("{:#?}", response);
     match response.status() {
-        reqwest::StatusCode::CREATED => {
-            let signal: Signal = response.json().await?;
-            Ok(signal.id)
+        reqwest::StatusCode::ACCEPTED => {
+            Ok(())
         }
         _ => Err(Box::new(DeviceError::Signal(
             response.status().as_str().to_owned(),
@@ -141,7 +140,7 @@ async fn main() {
 
     let device_id = &args.id;
 
-    thread::sleep(time::Duration::from_millis(30000));
+    thread::sleep(time::Duration::from_millis(20000));
 
     let registered = register_device(device_id, args.latitude, args.longitude).await;
     match registered {
@@ -157,7 +156,7 @@ async fn main() {
     let mut reader = csv::Reader::from_reader(file);
 
     for result in reader.records() {
-        thread::sleep(time::Duration::from_millis(3500));
+        thread::sleep(time::Duration::from_millis(2500));
         match result {
             Ok(record) => {
                 let obj_id = match record[0].parse::<u64>() {
@@ -174,7 +173,7 @@ async fn main() {
                 };
                 let signal_sent = send_signal(device_id, obj_id, latitude, longitude).await;
                 match signal_sent {
-                    Ok(id) => println!("Sent signal with id: {}", id),
+                    Ok(()) => println!("Signal sent correctly"),
                     Err(e) => {
                         println!("{}", e);
                     }

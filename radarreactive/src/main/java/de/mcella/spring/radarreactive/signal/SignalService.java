@@ -19,9 +19,9 @@ public class SignalService {
   public Flux<Signal> pollLatestEntries() {
     return Flux.defer(
             () -> {
-              Instant lastChecked = Instant.now().minusSeconds(2);
+              Instant lastChecked = Instant.now().minusSeconds(1);
               return signalRepository.findNewerThan(lastChecked);
             })
-        .repeatWhen(longFlux -> longFlux.delayElements(Duration.ofSeconds(2)));
+        .repeatWhen(longFlux -> longFlux.delayElements(Duration.ofSeconds(1)));
   }
 }

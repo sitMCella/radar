@@ -60,14 +60,14 @@ function Radar() {
 
     function removeOldSignals() {
         const now = Date.now()
-        const threshold = 2000
+        const threshold = 1000
         setSignals((prevSignals) =>
             prevSignals.filter((item) => now - item.creationtime <= threshold)
         )
     }
 
     useEffect(() => {
-        const interval = setInterval(() => removeOldSignals(), 2000)
+        const interval = setInterval(() => removeOldSignals(), 1000)
 
         // Development environment prefix: http://localhost:9090
         const devicesEventSource = new EventSource('/api/devices')
