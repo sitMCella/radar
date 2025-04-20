@@ -1,5 +1,7 @@
 # Radar Application
 
+![Radar](https://github.com/sitMCella/radar/wiki/images/radar.png)
+
 ## Table of contents
 
 * [Introduction](#introduction)
