@@ -96,7 +96,7 @@ async fn send_signal(
     obj_id: u64,
     latitude: f64,
     longitude: f64,
-) -> Result<u64, Box<dyn Error>> {
+) -> Result<(), Box<dyn Error>> {
     let client = reqwest::Client::new();
     let body = json!({
         "deviceId": device_id,
@@ -112,9 +112,8 @@ async fn send_signal(
         .await?;
     println!("{:#?}", response);
     match response.status() {
-        reqwest::StatusCode::CREATED => {
-            let signal: Signal = response.json().await?;
-            Ok(signal.id)
+        reqwest::StatusCode::ACCEPTED => {
+            Ok(())
         }
         _ => Err(Box::new(DeviceError::Signal(
             response.status().as_str().to_owned(),
@@ -174,7 +173,7 @@ async fn main() {
                 };
                 let signal_sent = send_signal(device_id, obj_id, latitude, longitude).await;
                 match signal_sent {
-                    Ok(id) => println!("Sent signal with id: {}", id),
+                    Ok(()) => println!("Signal sent correctly"),
                     Err(e) => {
                         println!("{}", e);
                     }
