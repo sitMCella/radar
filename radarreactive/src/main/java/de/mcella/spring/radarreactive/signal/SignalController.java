@@ -24,6 +24,6 @@ public class SignalController {
   @ResponseStatus(HttpStatus.OK)
   @CrossOrigin(origins = {"http://localhost", "http://localhost:3000"})
   public Flux<Signal> streamSignals() {
-    return this.signalService.pollLatestEntries();
+    return this.signalService.streamSignals();
   }
 }
