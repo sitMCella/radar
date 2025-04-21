@@ -15,7 +15,7 @@ The project is developed using Rust.
 ### Build Application
 
 ```sh
-cargo build
+cargo build --release
 ```
 
 ### Run Application

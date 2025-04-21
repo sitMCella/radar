@@ -1,5 +1,6 @@
 use clap::Parser;
 use core::fmt;
+use rand::Rng;
 use serde::Deserialize;
 use serde_json::json;
 use std::{error::Error, fs::File, thread, time};
@@ -29,9 +30,7 @@ struct Device {
 }
 
 #[derive(Deserialize)]
-struct Signal {
-    id: u64,
-}
+struct Signal {}
 
 #[derive(Debug)]
 enum DeviceError {
@@ -109,7 +108,7 @@ async fn send_signal(
         "latitude": latitude,
         "longitude": longitude
     });
-    // Development environment: use the URL "http://localhost:8080/api/devices"
+    // Development environment: use the URL "http://localhost:8080/api/signals"
     let response = client
         .post("http://hub:8080/api/signals")
         .json(&body)
@@ -118,6 +117,9 @@ async fn send_signal(
     println!("{:#?}", response);
     match response.status() {
         reqwest::StatusCode::ACCEPTED => Ok(()),
+        reqwest::StatusCode::TOO_MANY_REQUESTS => Err(Box::new(DeviceError::Signal(
+            "The Hub received too many requests, and cannot process the signal.".to_owned(),
+        ))),
         _ => Err(Box::new(DeviceError::Signal(
             response.status().as_str().to_owned(),
         ))),
@@ -143,7 +145,10 @@ async fn main() {
 
     let device_id = &args.id;
 
-    thread::sleep(time::Duration::from_millis(20000));
+    let mut rng = rand::rng();
+    let registration_delay_millis = 20000 + rng.random_range(1..=1500);
+
+    thread::sleep(time::Duration::from_millis(registration_delay_millis));
 
     let registered = register_device(device_id, args.latitude, args.longitude, args.radius).await;
     match registered {
@@ -154,12 +159,14 @@ async fn main() {
         }
     }
 
-    thread::sleep(time::Duration::from_millis(5000));
+    let events_delay_millis = 4000 + rng.random_range(1..=1500);
+    thread::sleep(time::Duration::from_millis(events_delay_millis));
 
     let mut reader = csv::Reader::from_reader(file);
 
     for result in reader.records() {
-        thread::sleep(time::Duration::from_millis(2500));
+        let event_delay_millis = 1500 + rng.random_range(1..=1500);
+        thread::sleep(time::Duration::from_millis(event_delay_millis));
         match result {
             Ok(record) => {
                 let obj_id = match record[0].parse::<u64>() {
