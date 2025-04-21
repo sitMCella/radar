@@ -28,6 +28,8 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+radardevice/load_test.log
+
 ### Cargo ###
 radardevice/target
 
