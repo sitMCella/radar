@@ -1,10 +1,50 @@
 import React, { useEffect, useRef, useState } from 'react'
+import { Observable } from 'rxjs'
+import { bufferTime } from 'rxjs/operators'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { Grid } from '@react-three/drei'
+import { createDevicesWorker } from './devices-worker-loader'
+import { createSignalsWorker } from './signals-worker-loader'
 
 function Radar() {
     const [devices, setDevices] = useState([])
     const [signals, setSignals] = useState([])
+
+    const createDevicesObservable = () => {
+        return new Observable((subscriber) => {
+            const worker = createDevicesWorker()
+
+            worker.onmessage = (w) => {
+                if (w.data?.error) {
+                    subscriber.error(w.data)
+                    return
+                }
+                subscriber.next(w.data)
+            }
+
+            return () => {
+                worker.terminate()
+            }
+        })
+    }
+
+    const createSignalsObservable = () => {
+        return new Observable((subscriber) => {
+            const worker = createSignalsWorker()
+
+            worker.onmessage = (w) => {
+                if (w.data?.error) {
+                    subscriber.error(w.data)
+                    return
+                }
+                subscriber.next(w.data)
+            }
+
+            return () => {
+                worker.terminate()
+            }
+        })
+    }
 
     function Device(device) {
         const ref = useRef()
@@ -68,69 +108,72 @@ function Radar() {
     useEffect(() => {
         const interval = setInterval(() => removeOldSignals(), 1000)
 
-        // Development environment prefix: http://localhost:9090
-        const devicesEventSource = new EventSource('/api/devices')
-        devicesEventSource.onmessage = (event) => {
-            if (event.data) {
-                const device = JSON.parse(event.data)
-                if (!devices.some((item) => device.id === item.id)) {
-                    setDevices((prevDevices) => [...prevDevices, device])
-                }
-            }
-        }
+        const devicesObservable = createDevicesObservable().pipe(
+            bufferTime(200)
+        )
 
-        devicesEventSource.onerror = (error) => {
-            console.error('Devices EventSource failed:', error)
-            devicesEventSource.close()
-        }
+        const devicesSubscription = devicesObservable.subscribe({
+            next: (batch) => {
+                batch.forEach((data) => {
+                    const device = JSON.parse(data)
+                    if (!devices.some((item) => device.id === item.id)) {
+                        setDevices((prevDevices) => [...prevDevices, device])
+                    }
+                })
+            },
+            error: (err) => console.error('Devices SSE error:', err),
+        })
 
-        // Development environment prefix: http://localhost:9090
-        const signalsEventSource = new EventSource('/api/signals')
-        signalsEventSource.onmessage = (event) => {
-            if (event.data) {
-                const signal = JSON.parse(event.data)
-                if (!signals.some((item) => signal.id === item.id)) {
-                    if (
-                        !signals.some(
-                            (item) =>
-                                signal.id < item.id &&
-                                signal.deviceId === item.deviceId &&
-                                signal.objId === item.objId
-                        )
-                    ) {
-                        if (
-                            !signals.some(
-                                (item) =>
-                                    signal.deviceId === item.deviceId &&
-                                    signal.objId === item.objId
-                            )
-                        ) {
-                            setSignals((prevSignals) => [
-                                ...prevSignals,
-                                signal,
-                            ])
-                        } else {
-                            const cleanedSignals = signals.filter(
-                                (item) =>
-                                    signal.deviceId !== item.deviceId ||
-                                    (signal.deviceId === item.deviceId &&
-                                        signal.objId !== item.objId)
-                            )
-                            setSignals([...cleanedSignals, signal])
+        const signalsObservable = createSignalsObservable().pipe(
+            bufferTime(200)
+        )
+
+        const signalsSubscription = signalsObservable.subscribe({
+            next: (batch) => {
+                batch.forEach((data) => {
+                    if (data) {
+                        const signal = JSON.parse(data)
+                        if (!signals.some((item) => signal.id === item.id)) {
+                            if (
+                                !signals.some(
+                                    (item) =>
+                                        signal.id < item.id &&
+                                        signal.deviceId === item.deviceId &&
+                                        signal.objId === item.objId
+                                )
+                            ) {
+                                if (
+                                    !signals.some(
+                                        (item) =>
+                                            signal.deviceId === item.deviceId &&
+                                            signal.objId === item.objId
+                                    )
+                                ) {
+                                    setSignals((prevSignals) => [
+                                        ...prevSignals,
+                                        signal,
+                                    ])
+                                } else {
+                                    const cleanedSignals = signals.filter(
+                                        (item) =>
+                                            signal.deviceId !== item.deviceId ||
+                                            (signal.deviceId ===
+                                                item.deviceId &&
+                                                signal.objId !== item.objId)
+                                    )
+                                    setSignals([...cleanedSignals, signal])
+                                }
+                            }
                         }
                     }
-                }
-            }
-        }
-
-        signalsEventSource.onerror = (error) => {
-            console.error('Signals EventSource failed:', error)
-            signalsEventSource.close()
-        }
+                })
+            },
+            error: (err) => console.error('Signals SSE error:', err),
+        })
 
         return () => {
-            devicesEventSource.close()
-            signalsEventSource.close()
+            devicesSubscription.unsubscribe()
+            signalsSubscription.unsubscribe()
             clearInterval(interval)
         }
     }, [devices, signals])
