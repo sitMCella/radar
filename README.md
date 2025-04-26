@@ -10,7 +10,7 @@
 
 ## Introduction
 
-The Radar application allows registered devices to communicate with a Radar Hub. The Hub receives the geographical position of nearby objects from the devices. A frontend web application displays the position of the detected objects in a 2d canvas. The frontend application continuosly receives data from a reactive backend.
+The Radar application allows registered devices to communicate with a Radar Hub. The devices send the geographical position of nearby objects to the Radar Hub. A frontend web application displays the position of the detected objects in a 2d canvas. The frontend application continuosly receives data from a reactive backend.
 
 ## Requirements
 
