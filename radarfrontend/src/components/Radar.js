@@ -101,7 +101,7 @@ function Radar() {
         const now = Date.now()
         const threshold = 1000
         setSignals((prevSignals) =>
-            prevSignals.filter((item) => now - item.creationtime <= threshold)
+            prevSignals.filter((item) => now - item.creationtime < threshold)
         )
     }
 
@@ -125,44 +125,45 @@ function Radar() {
         })
 
         const signalsObservable = createSignalsObservable().pipe(
-            bufferTime(200)
+            bufferTime(500)
         )
 
         const signalsSubscription = signalsObservable.subscribe({
             next: (batch) => {
                 batch.forEach((data) => {
-                    if (data) {
-                        const signal = JSON.parse(data)
-                        if (!signals.some((item) => signal.id === item.id)) {
+                    if (!data) return
+                    const signal = JSON.parse(data)
+                    if (!signals.some((item) => signal.id === item.id)) {
+                        if (
+                            !signals.some(
+                                (item) =>
+                                    signal.id < item.id &&
+                                    signal.deviceId === item.deviceId &&
+                                    signal.objId === item.objId
+                            )
+                        ) {
                             if (
                                 !signals.some(
                                     (item) =>
-                                        signal.id < item.id &&
                                         signal.deviceId === item.deviceId &&
                                         signal.objId === item.objId
                                 )
                             ) {
-                                if (
-                                    !signals.some(
-                                        (item) =>
-                                            signal.deviceId === item.deviceId &&
-                                            signal.objId === item.objId
-                                    )
-                                ) {
-                                    setSignals((prevSignals) => [
-                                        ...prevSignals,
-                                        signal,
-                                    ])
-                                } else {
-                                    const cleanedSignals = signals.filter(
+                                setSignals((prevSignals) => [
+                                    ...prevSignals,
+                                    signal,
+                                ])
+                            } else {
+                                setSignals((prevSignals) => [
+                                    ...prevSignals.filter(
                                         (item) =>
                                             signal.deviceId !== item.deviceId ||
                                             (signal.deviceId ===
                                                 item.deviceId &&
                                                 signal.objId !== item.objId)
-                                    )
-                                    setSignals([...cleanedSignals, signal])
-                                }
+                                    ),
+                                    signal,
+                                ])
                             }
                         }
                     }
