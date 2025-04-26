@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Observable } from 'rxjs'
 import { bufferTime } from 'rxjs/operators'
 import { Canvas, useFrame } from '@react-three/fiber'
@@ -9,6 +9,24 @@ import { createSignalsWorker } from './signals-worker-loader'
 function Radar() {
     const [devices, setDevices] = useState([])
     const [signals, setSignals] = useState([])
+
+    const renderedDevices = useMemo(() => {
+        return devices.map((device, index) => (
+            <Device key={index} device={device} />
+        ))
+    }, [devices])
+
+    const renderedPulses = useMemo(() => {
+        return devices.map((device, index) => (
+            <Pulse key={index} device={device} />
+        ))
+    }, [devices])
+
+    const renderedSignals = useMemo(() => {
+        return signals.map((signal, index) => (
+            <Signal key={index} signal={signal} />
+        ))
+    }, [signals])
 
     const createDevicesObservable = () => {
         return new Observable((subscriber) => {
@@ -99,27 +117,31 @@ function Radar() {
 
     function removeOldSignals() {
         const now = Date.now()
-        const threshold = 1000
+        const threshold = 1500
         setSignals((prevSignals) =>
             prevSignals.filter((item) => now - item.creationtime < threshold)
         )
     }
 
     useEffect(() => {
-        const interval = setInterval(() => removeOldSignals(), 1000)
+        const interval = setInterval(() => removeOldSignals(), 1500)
 
         const devicesObservable = createDevicesObservable().pipe(
-            bufferTime(200)
+            bufferTime(500)
         )
 
         const devicesSubscription = devicesObservable.subscribe({
             next: (batch) => {
+                let updatedDevices = [...devices]
+                console.log('initial: ' + devices)
                 batch.forEach((data) => {
                     const device = JSON.parse(data)
-                    if (!devices.some((item) => device.id === item.id)) {
-                        setDevices((prevDevices) => [...prevDevices, device])
+                    if (!updatedDevices.some((item) => device.id === item.id)) {
+                        updatedDevices = [...updatedDevices, device]
                     }
                 })
+                console.log('final: ' + updatedDevices)
+                setDevices(updatedDevices)
             },
             error: (err) => console.error('Devices SSE error:', err),
         })
@@ -130,12 +152,13 @@ function Radar() {
 
         const signalsSubscription = signalsObservable.subscribe({
             next: (batch) => {
+                let updatedSignal = [...signals]
                 batch.forEach((data) => {
                     if (!data) return
                     const signal = JSON.parse(data)
-                    if (!signals.some((item) => signal.id === item.id)) {
+                    if (!updatedSignal.some((item) => signal.id === item.id)) {
                         if (
-                            !signals.some(
+                            !updatedSignal.some(
                                 (item) =>
                                     signal.id < item.id &&
                                     signal.deviceId === item.deviceId &&
@@ -143,19 +166,16 @@ function Radar() {
                             )
                         ) {
                             if (
-                                !signals.some(
+                                !updatedSignal.some(
                                     (item) =>
                                         signal.deviceId === item.deviceId &&
                                         signal.objId === item.objId
                                 )
                             ) {
-                                setSignals((prevSignals) => [
-                                    ...prevSignals,
-                                    signal,
-                                ])
+                                updatedSignal = [...updatedSignal, signal]
                             } else {
-                                setSignals((prevSignals) => [
-                                    ...prevSignals.filter(
+                                updatedSignal = [
+                                    ...updatedSignal.filter(
                                         (item) =>
                                             signal.deviceId !== item.deviceId ||
                                             (signal.deviceId ===
@@ -163,11 +183,12 @@ function Radar() {
                                                 signal.objId !== item.objId)
                                     ),
                                     signal,
-                                ])
+                                ]
                             }
                         }
                     }
                 })
+                setSignals(updatedSignal)
             },
             error: (err) => console.error('Signals SSE error:', err),
         })
@@ -177,7 +198,7 @@ function Radar() {
             signalsSubscription.unsubscribe()
             clearInterval(interval)
         }
-    }, [devices, signals])
+    }, [devices])
 
     return (
         <div>
@@ -198,17 +219,11 @@ function Radar() {
                         sectionColor="green"
                     />
 
-                    {devices.map((device, index) => (
-                        <Device key={index} device={device} />
-                    ))}
+                    {renderedDevices}
 
-                    {devices.map((device, index) => (
-                        <Pulse key={index} device={device} />
-                    ))}
+                    {renderedPulses}
 
-                    {signals.map((signal, index) => (
-                        <Signal key={index} signal={signal} />
-                    ))}
+                    {renderedSignals}
                 </Canvas>
             </div>
         </div>
