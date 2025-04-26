@@ -1,11 +1,25 @@
-CREATE OR REPLACE FUNCTION notify_event() RETURNS TRIGGER AS
+CREATE OR REPLACE FUNCTION notify_devices_event() RETURNS TRIGGER AS
+$$
+BEGIN
+    PERFORM pg_notify('devices_notification', json_build_object(
+      'id', NEW.id,
+      'latitude', NEW.latitude,
+      'longitude', NEW.longitude,
+      'radius', NEW.radius
+    )::text);
+    RETURN NULL;
+END;
+$$
+LANGUAGE plpgsql;;
+
+CREATE OR REPLACE FUNCTION notify_signals_event() RETURNS TRIGGER AS
 $$
 BEGIN
     PERFORM pg_notify('signals_notification', json_build_object(
       'id', NEW.id,
       'creationtime', to_char(NEW.creationtime, 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"'),
-      'device_id', NEW.device_id,
-      'obj_id', NEW.obj_id,
+      'deviceId', NEW.device_id,
+      'objId', NEW.obj_id,
       'latitude', NEW.latitude,
       'longitude', NEW.longitude
     )::text);
@@ -30,10 +44,18 @@ CREATE TABLE if not exists signals (
   longitude DOUBLE PRECISION NOT NULL
 );;
 
+DROP TRIGGER IF EXISTS notify_devices ON devices;;
+
+CREATE TRIGGER notify_devices
+    AFTER INSERT
+    ON devices
+    FOR EACH ROW
+EXECUTE PROCEDURE notify_devices_event();;
+
 DROP TRIGGER IF EXISTS notify_signals ON signals;;
 
 CREATE TRIGGER notify_signals
     AFTER INSERT
     ON signals
     FOR EACH ROW
-EXECUTE PROCEDURE notify_event();;
+EXECUTE PROCEDURE notify_signals_event();;
