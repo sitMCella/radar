@@ -115,16 +115,16 @@ function Radar() {
         )
     }
 
-    function removeOldSignals() {
-        const now = Date.now()
-        const threshold = 1500
-        setSignals((prevSignals) =>
-            prevSignals.filter((item) => now - item.creationtime < threshold)
-        )
-    }
-
     useEffect(() => {
-        const interval = setInterval(() => removeOldSignals(), 1500)
+        let updatedDevices = []
+        let updatedSignal = []
+
+        const interval = setInterval(() => {
+            const now = Date.now()
+            const threshold = 1500
+            updatedSignal = updatedSignal.filter((item) => now - item.creationtime < threshold)
+            setSignals(updatedSignal)
+        }, 1500)
 
         const devicesObservable = createDevicesObservable().pipe(
             bufferTime(500)
@@ -132,15 +132,13 @@ function Radar() {
 
         const devicesSubscription = devicesObservable.subscribe({
             next: (batch) => {
-                let updatedDevices = [...devices]
-                console.log('initial: ' + devices)
                 batch.forEach((data) => {
+                    if (!data) return
                     const device = JSON.parse(data)
                     if (!updatedDevices.some((item) => device.id === item.id)) {
                         updatedDevices = [...updatedDevices, device]
                     }
                 })
-                console.log('final: ' + updatedDevices)
                 setDevices(updatedDevices)
             },
             error: (err) => console.error('Devices SSE error:', err),
@@ -152,40 +150,27 @@ function Radar() {
 
         const signalsSubscription = signalsObservable.subscribe({
             next: (batch) => {
-                let updatedSignal = [...signals]
                 batch.forEach((data) => {
                     if (!data) return
                     const signal = JSON.parse(data)
-                    if (!updatedSignal.some((item) => signal.id === item.id)) {
-                        if (
-                            !updatedSignal.some(
+                    if (
+                        !updatedSignal.some(
+                            (item) =>
+                                signal.deviceId === item.deviceId &&
+                                signal.objId === item.objId
+                        )
+                    ) {
+                        updatedSignal = [...updatedSignal, signal]
+                    } else {
+                        updatedSignal = [
+                            ...updatedSignal.filter(
                                 (item) =>
-                                    signal.id < item.id &&
-                                    signal.deviceId === item.deviceId &&
-                                    signal.objId === item.objId
-                            )
-                        ) {
-                            if (
-                                !updatedSignal.some(
-                                    (item) =>
-                                        signal.deviceId === item.deviceId &&
-                                        signal.objId === item.objId
-                                )
-                            ) {
-                                updatedSignal = [...updatedSignal, signal]
-                            } else {
-                                updatedSignal = [
-                                    ...updatedSignal.filter(
-                                        (item) =>
-                                            signal.deviceId !== item.deviceId ||
-                                            (signal.deviceId ===
-                                                item.deviceId &&
-                                                signal.objId !== item.objId)
-                                    ),
-                                    signal,
-                                ]
-                            }
-                        }
+                                    signal.deviceId !== item.deviceId ||
+                                    (signal.deviceId === item.deviceId &&
+                                        signal.objId !== item.objId)
+                            ),
+                            signal,
+                        ]
                     }
                 })
                 setSignals(updatedSignal)
@@ -198,7 +183,7 @@ function Radar() {
             signalsSubscription.unsubscribe()
             clearInterval(interval)
         }
-    }, [devices])
+    }, [])
 
     return (
         <div>

@@ -22,8 +22,8 @@ public class DeviceController {
 
   @GetMapping(produces = MediaType.TEXT_EVENT_STREAM_VALUE)
   @ResponseStatus(HttpStatus.OK)
-  @CrossOrigin(origins = "http://localhost:3000")
+  @CrossOrigin(origins = {"http://localhost", "http://localhost:3000"})
   public Flux<Device> streamDevices() {
-    return this.deviceService.getDevices();
+    return this.deviceService.streamDevices();
   }
 }
