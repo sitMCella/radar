@@ -122,7 +122,7 @@ function Radar() {
         const interval = setInterval(() => {
             const now = Date.now()
             const threshold = 1500
-            updatedSignal = updatedSignal.filter((item) => now - item.creationtime < threshold)
+            updatedSignal = updatedSignal.filter((item) => now - item.receivedtime < threshold)
             setSignals(updatedSignal)
         }, 1500)
 
@@ -145,7 +145,7 @@ function Radar() {
         })
 
         const signalsObservable = createSignalsObservable().pipe(
-            bufferTime(500)
+            bufferTime(250)
         )
 
         const signalsSubscription = signalsObservable.subscribe({
@@ -153,6 +153,7 @@ function Radar() {
                 batch.forEach((data) => {
                     if (!data) return
                     const signal = JSON.parse(data)
+                    signal.receivedtime = Date.now()
                     if (
                         !updatedSignal.some(
                             (item) =>

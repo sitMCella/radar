@@ -6,7 +6,8 @@
 
 * [Introduction](#introduction)
 * [Requirements](#requirements)
-* [Run application](#run-application)
+* [Run Application](#run-application)
+* [Load Test](#load-test)
 
 ## Introduction
 
@@ -16,10 +17,19 @@ The Radar application allows registered devices to communicate with a Radar Hub.
 
 - Docker (Docker compose)
 
-## Run Applications
+## Run Application
 
 ```sh
 docker-compose -f docker-compose.yml up
 ```
 
 Open http://localhost:80 to view the application in your browser.
+
+## Load Test
+
+Run the load test to simulate a heavy load of signals from the devices:
+
+```sh
+cd radardevice
+./load_test.sh
+```
